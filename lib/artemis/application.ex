@@ -9,7 +9,7 @@ defmodule Artemis.Application do
   def start(_type, _args) do
     children = [
       ArtemisWeb.Telemetry,
-      Artemis.Repo,
+      # Artemis.Repo, -- Disabled: No database needed for this fuel calculator challenge
       {DNSCluster, query: Application.get_env(:artemis, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Artemis.PubSub},
       # Start a worker by calling: Artemis.Worker.start_link(arg)

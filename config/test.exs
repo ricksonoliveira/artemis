@@ -1,17 +1,21 @@
 import Config
 
-# Configure your database
+# For this fuel calculator challenge, we don't need a database
+# Disable the repo configuration in tests
+config :artemis, ecto_repos: []
+
+# Configure your database (commented out for this challenge)
 #
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
-config :artemis, Artemis.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "artemis_test#{System.get_env("MIX_TEST_PARTITION")}",
-  pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+# config :artemis, Artemis.Repo,
+#   username: "postgres",
+#   password: "postgres",
+#   hostname: "localhost",
+#   database: "artemis_test#{System.get_env("MIX_TEST_PARTITION")}",
+#   pool: Ecto.Adapters.SQL.Sandbox,
+#   pool_size: System.schedulers_online() * 2
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.

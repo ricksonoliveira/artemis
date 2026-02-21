@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>🚀 Artemis • Interplanetary Fuel Calculator</title>
+    <link phx-track-static rel="stylesheet" href="/assets/css/app.css" />
+    <script defer phx-track-static type="text/javascript" src="/assets/js/app.js">
+    </script>
+  </head>
+  <body>
+    <!-- Flash Messages -->
+    <div id="flash-group" aria-live="polite">
+      <%= if Phoenix.Flash.get(@flash, :info) do %>
+        <div class="fixed top-4 right-4 z-50 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          {Phoenix.Flash.get(@flash, :info)}
+        </div>
+      <% end %>
+      <%= if Phoenix.Flash.get(@flash, :error) do %>
+        <div class="fixed top-4 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          {Phoenix.Flash.get(@flash, :error)}
+        </div>
+      <% end %>
+    </div>
+
+    <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-black">
+      <div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Header -->
+        <div class="text-center mb-8 lg:mb-12">
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+            🚀 Artemis • Interplanetary Fuel Calculator
+          </h1>
+          <p class="text-lg sm:text-xl text-gray-300 max-w-5xl mx-auto">
+            Calculate the fuel requirements for your space missions across the solar system.
+            Account for the recursive fuel-for-fuel calculations needed for interplanetary travel.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8 max-w-none">
+          <!-- Left Column: Mission Configuration -->
+          <div class="space-y-6 lg:space-y-8">
+            <!-- Spacecraft Mass Input -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 lg:p-8 border border-white/20">
+              <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
+                🛰️ Spacecraft Configuration
+              </h2>
+
+              <.form for={@form} phx-change="validate_mass" id="mass-form" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-200 mb-2">
+                    Equipment Mass (kg)
+                  </label>
+                  <.input
+                    field={@form[:mass]}
+                    type="text"
+                    placeholder="28801"
+                    class={[
+                      "bg-white/5 border-white/30 text-white placeholder-gray-400",
+                      "focus:border-blue-400 focus:ring-blue-400/50"
+                    ]}
+                  />
+                  <%= if @errors[:mass] do %>
+                    <div class="mt-2 text-sm text-red-400">
+                      {@errors[:mass]}
+                    </div>
+                  <% end %>
+                </div>
+              </.form>
+            </div>
+            
+<!-- Flight Path Builder -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 lg:p-8 border border-white/20">
+              <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
+                🛣️ Flight Path Builder
+              </h2>
+              
+<!-- Add Step Controls -->
+              <div class="space-y-4 mb-6">
+                <form phx-change="update_step_form" class="contents">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-200 mb-2">Action</label>
+                      <select
+                        name="step[action]"
+                        value={@step_action}
+                        class="w-full rounded-lg border-white/30 bg-white/5 text-white focus:border-blue-400 focus:ring-blue-400/50"
+                      >
+                        <option value="launch" selected={@step_action == :launch}>
+                          🚀 Launch
+                        </option>
+                        <option value="land" selected={@step_action == :land}>🛬 Land</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-sm font-medium text-gray-200 mb-2">Planet</label>
+                      <select
+                        name="step[planet]"
+                        value={@step_planet}
+                        class="w-full rounded-lg border-white/30 bg-white/5 text-white focus:border-blue-400 focus:ring-blue-400/50"
+                      >
+                        <option value="earth" selected={@step_planet == :earth}>🌍 Earth</option>
+                        <option value="moon" selected={@step_planet == :moon}>🌙 Moon</option>
+                        <option value="mars" selected={@step_planet == :mars}>🔴 Mars</option>
+                      </select>
+                    </div>
+                  </div>
+                </form>
+
+                <div class="flex my-4 space-x-3">
+                  <button
+                    type="button"
+                    phx-click="add_step"
+                    class="flex-1 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                  >
+                    + Add Step
+                  </button>
+
+                  <%= if @flight_path != [] do %>
+                    <button
+                      type="button"
+                      phx-click="clear_path"
+                      class="px-4 py-2 bg-red-500/80 text-white rounded-lg font-medium hover:bg-red-600 transition-all duration-200"
+                    >
+                      Clear All
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+              
+<!-- Current Flight Path -->
+              <%= if @flight_path == [] do %>
+                <div class="text-center py-8 text-gray-400 border-2 border-dashed border-white/20 rounded-lg">
+                  <div class="text-4xl mb-2">🛸</div>
+                  <p>No flight steps added yet.</p>
+                  <p class="text-sm">Add a step above to start planning your mission.</p>
+                </div>
+              <% else %>
+                <div class="space-y-3">
+                  <h3 class="text-lg font-medium text-white">Mission Steps:</h3>
+                  <div class="space-y-2">
+                    <%= for {{action, planet}, index} <- Enum.with_index(@flight_path) do %>
+                      <div class="flex items-center justify-between bg-white/5 rounded-lg p-3 border border-white/10">
+                        <div class="flex items-center space-x-3">
+                          <span class="text-lg">{action_emoji(action)}</span>
+                          <span class="text-lg">{planet_emoji(planet)}</span>
+                          <div>
+                            <div class="font-medium text-white">
+                              {step_display_text(action, planet)}
+                            </div>
+                            <div class="text-sm text-gray-400">
+                              Step {index + 1}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          phx-click="remove_step"
+                          phx-value-index={index}
+                          class="text-red-400 hover:text-red-300 transition-colors duration-200"
+                          title="Remove step"
+                        >
+                          ❌
+                        </button>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            
+<!-- Example Missions -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 lg:p-8 border border-white/20">
+              <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
+                📚 Example Missions
+              </h2>
+              <div class="space-y-3">
+                <button
+                  type="button"
+                  phx-click="load_example"
+                  phx-value-example="apollo11"
+                  class="w-full text-left p-4 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all duration-200 group"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="font-medium text-white group-hover:text-blue-300">
+                        🌙 Apollo 11 Mission
+                      </div>
+                      <div class="text-sm text-gray-400">Earth → Moon → Earth (28,801 kg)</div>
+                    </div>
+                    <div class="text-gray-400 group-hover:text-blue-300">→</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  phx-click="load_example"
+                  phx-value-example="mars"
+                  class="w-full text-left p-4 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all duration-200 group"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="font-medium text-white group-hover:text-red-300">
+                        🔴 Mars Mission
+                      </div>
+                      <div class="text-sm text-gray-400">Earth → Mars → Earth (14,606 kg)</div>
+                    </div>
+                    <div class="text-gray-400 group-hover:text-red-300">→</div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  phx-click="load_example"
+                  phx-value-example="passenger_ship"
+                  class="w-full text-left p-4 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 transition-all duration-200 group"
+                >
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="font-medium text-white group-hover:text-purple-300">
+                        🚢 Passenger Ship
+                      </div>
+                      <div class="text-sm text-gray-400">
+                        Earth → Moon → Mars → Earth (75,432 kg)
+                      </div>
+                    </div>
+                    <div class="text-gray-400 group-hover:text-purple-300">→</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+<!-- Right Column: Results -->
+          <div class="space-y-6 lg:space-y-8">
+            <!-- Fuel Calculation Results -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 lg:p-8 border border-white/20 top-8">
+              <h2 class="text-2xl font-semibold text-white mb-4 flex items-center">
+                ⛽ Fuel Requirements
+              </h2>
+
+              <%= if @flight_path != [] and @mass > 0 and @errors == %{} do %>
+                <div class="space-y-6">
+                  <!-- Total Fuel Display -->
+                  <div class="text-center">
+                    <div class="text-6xl font-bold text-transparent bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text mb-2">
+                      {format_number(@total_fuel)}
+                    </div>
+                    <div class="text-xl text-gray-300 mb-4">kg of fuel required</div>
+                    
+<!-- Mission Summary -->
+                    <div class="bg-white/5 rounded-lg p-4 border border-white/10">
+                      <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <div class="text-gray-400">Equipment Mass</div>
+                          <div class="text-white font-medium">{format_number(@mass)} kg</div>
+                        </div>
+                        <div>
+                          <div class="text-gray-400">Mission Steps</div>
+                          <div class="text-white font-medium">{length(@flight_path)} steps</div>
+                        </div>
+                        <div>
+                          <div class="text-gray-400">Fuel-to-Mass Ratio</div>
+                          <div class="text-white font-medium">
+                            {Float.round(@total_fuel / @mass, 2)}:1
+                          </div>
+                        </div>
+                        <div>
+                          <div class="text-gray-400">Total Launch Mass</div>
+                          <div class="text-white font-medium">
+                            {format_number(@mass + @total_fuel)} kg
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+<!-- Mission Path Visualization -->
+                  <div>
+                    <h3 class="text-lg font-medium text-white mb-3">Mission Timeline</h3>
+                    <div class="space-y-3">
+                      <%= for {{action, planet}, index} <- Enum.with_index(@flight_path) do %>
+                        <div class="flex items-center space-x-3">
+                          <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <span class="text-xl">{action_emoji(action)}</span>
+                            <span class="text-white font-medium">
+                              {step_display_text(action, planet)}
+                            </span>
+                          </div>
+                        </div>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% else %>
+                <div class="text-center py-12 text-gray-400">
+                  <%= cond do %>
+                    <% @errors != %{} -> %>
+                      <div class="text-4xl mb-4">⚠️</div>
+                      <p class="text-lg">Please fix the input errors above.</p>
+                    <% @flight_path == [] -> %>
+                      <div class="text-4xl mb-4">📋</div>
+                      <p class="text-lg">Add mission steps to see fuel calculations.</p>
+                      <p class="text-sm">Start by building your flight path on the left.</p>
+                    <% @mass <= 0 -> %>
+                      <div class="text-4xl mb-4">⚖️</div>
+                      <p class="text-lg">Enter a valid spacecraft mass.</p>
+                    <% true -> %>
+                      <div class="text-4xl mb-4">🔮</div>
+                      <p class="text-lg">Calculating...</p>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+            
+<!-- How It Works -->
+            <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 lg:p-8 border border-white/20">
+              <h2 class="text-2xl font-semibold text-white mb-4">
+                🧮 How It Works
+              </h2>
+              <div class="space-y-4 text-gray-300 text-sm">
+                <div>
+                  <h3 class="text-white font-medium mb-2">Fuel Formulas:</h3>
+                  <div class="space-y-1 font-mono text-xs bg-black/20 rounded p-3">
+                    <div>Launch: floor(mass × gravity × 0.042 - 33)</div>
+                    <div>Landing: floor(mass × gravity × 0.033 - 42)</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 class="text-white font-medium mb-2">Planet Gravities:</h3>
+                  <div class="space-y-1">
+                    <div>🌍 Earth: 9.807 m/s²</div>
+                    <div>🌙 Moon: 1.62 m/s²</div>
+                    <div>🔴 Mars: 3.711 m/s²</div>
+                  </div>
+                </div>
+
+                <p class="text-xs">
+                  The calculator accounts for the recursive fuel requirement - carrying fuel adds mass,
+                  which requires additional fuel, until additional fuel needed becomes zero or negative.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
