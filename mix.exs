@@ -11,7 +11,15 @@ defmodule Artemis.MixProject do
       aliases: aliases(),
       deps: deps(),
       compilers: [:phoenix_live_view] ++ Mix.compilers(),
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.lcov": :test
+      ]
     ]
   end
 
@@ -27,7 +35,7 @@ defmodule Artemis.MixProject do
 
   def cli do
     [
-      preferred_envs: [precommit: :test]
+      preferred_envs: [precommit: :test, coveralls: :test]
     ]
   end
 
@@ -41,9 +49,6 @@ defmodule Artemis.MixProject do
   defp deps do
     [
       {:phoenix, "~> 1.8.3"},
-      {:phoenix_ecto, "~> 4.5"},
-      {:ecto_sql, "~> 3.13"},
-      {:postgrex, ">= 0.0.0"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 1.1.0"},
@@ -65,7 +70,8 @@ defmodule Artemis.MixProject do
       {:gettext, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 
@@ -77,10 +83,11 @@ defmodule Artemis.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
-      "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      setup: ["deps.get", "assets.setup", "assets.build"],
+      # Database aliases disabled for fuel calculator challenge
+      # "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
+      # "ecto.reset": ["ecto.drop", "ecto.setup"],
+      test: ["test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["compile", "tailwind artemis", "esbuild artemis"],
       "assets.deploy": [

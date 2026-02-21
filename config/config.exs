@@ -8,7 +8,8 @@
 import Config
 
 config :artemis,
-  ecto_repos: [Artemis.Repo],
+  # Database disabled for fuel calculator challenge
+  ecto_repos: [],
   generators: [timestamp_type: :utc_datetime]
 
 # Configure the endpoint

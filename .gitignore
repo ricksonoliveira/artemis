@@ -4,6 +4,10 @@
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
 
+# ExCoveralls coverage reports
+/cover_db/
+/coveralls.json
+
 # The directory Mix downloads your dependencies sources to.
 /deps/
 
